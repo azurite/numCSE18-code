@@ -1,2 +1,5 @@
 # Ignore compiled cpp code
 out
+
+# Ignore plot outputs
+*.eps

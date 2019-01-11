@@ -3,3 +3,6 @@ out
 
 # Ignore plot outputs
 *.eps
+
+basePictures
+testPictures

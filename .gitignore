@@ -3,6 +3,12 @@ out
 
 # Ignore plot outputs
 *.eps
+*.txt
 
+# Ignore pictures from face recognition task
 basePictures
 testPictures
+
+# Ignore matlab and python scripts used for plotting
+*.m
+*.py

@@ -54,15 +54,16 @@ MatrixXd quadraticSplineFast(const VectorXd &x, const VectorXd &y) {
 	for(int i = 0; i < N; i++) {
 		triplets.push_back(Triplet<double>(i, 2*N + i, 1));
 		triplets.push_back(Triplet<double>(N + i, 2*N + i, 1));
-		triplets.push_back(Triplet<double>(2*N + 1, N + i, 1));
-		triplets.push_back(Triplet<double>(2*N + 1, N + ((i + 1) % N), -1));
+		triplets.push_back(Triplet<double>(2*N + i, N + i, 1));
+		triplets.push_back(Triplet<double>(2*N + i, N + ((i + 1) % N), -1));
 		triplets.push_back(Triplet<double>(N + i, i, delta_x2(i)));
 		triplets.push_back(Triplet<double>(N + i, N + i, delta_x(i)));
-		triplets.push_back(Triplet<double>(2*N + i, i, 2 * delta_x2(i)));
+		triplets.push_back(Triplet<double>(2*N + i, i, 2 * delta_x(i)));
 	}
 
 	SparseMatrix<double> A(3*N, 3*N);
 	A.setFromTriplets(triplets.begin(), triplets.end());
+	A.makeCompressed();
 
 	SparseLU<SparseMatrix<double>> splu;
 	splu.compute(A);

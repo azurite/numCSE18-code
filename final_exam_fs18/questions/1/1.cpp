@@ -8,7 +8,7 @@ using namespace Eigen;
 
 MatrixXd quadraticSpline(const VectorXd &x, const VectorXd &y) {
 	int N = x.size()-1;
-	MatrixXd out(3,N);
+	MatrixXd out(N, 3);
 
 	VectorXd delta_x = x.tail(N) - x.head(N);
 	VectorXd delta_x2 = (delta_x.array() * delta_x.array()).matrix();
@@ -44,7 +44,7 @@ MatrixXd quadraticSpline(const VectorXd &x, const VectorXd &y) {
 
 MatrixXd quadraticSplineFast(const VectorXd &x, const VectorXd &y) {
 	int N = x.size()-1;
-	MatrixXd out(3, N);
+	MatrixXd out(N, 3);
 
 	VectorXd delta_x = x.tail(N) - x.head(N);
 	VectorXd delta_x2 = (delta_x.array() * delta_x.array()).matrix();

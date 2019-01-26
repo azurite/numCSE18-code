@@ -1,6 +1,7 @@
 #include <iostream>
 #include <limits>
 #include <eigen3/Eigen/Dense>
+#include <Eigen/SVD>
 
 using namespace Eigen;
 
@@ -14,8 +15,34 @@ double llsq_gsol(const MatrixXd& A, const VectorXd& b, VectorXd& x) {
 	
 	double llsq_err = 0;
 	
-	// TODO: Solve exercise 2.c
+	JacobiSVD<MatrixXd> svd(A, ComputeFullU | ComputeFullV);
+
+	const int m = A.rows();
+	const int n = A.cols();
+	int r = 0;
+
+	VectorXd sv = svd.singularValues();
+
+	// calculate rank of A
+	for(int i = 0; i < sv.size(); i++) {
+		if(std::abs(sv(i)) > 1e-12) {
+			r++;
+		}
+	}
+
+	MatrixXd U = svd.matrixU();
+	MatrixXd V = svd.matrixV();
+
+	MatrixXd U1 = U.block(0, 0, m, r);
+	MatrixXd U2 = U.block(0, r, m, m - r);
+	MatrixXd V1 = V.block(0, 0, n, r);
+
+	// singular values are sorted in decreasing order
+	MatrixXd sigma_inv = sv.head(r).cwiseInverse().asDiagonal();
 	
+	x = V1 * sigma_inv * U1.transpose() * b;
+	llsq_err = (U2.transpose() * b).norm();
+
 	return llsq_err;
 }
 
@@ -24,8 +51,29 @@ double llsq_gsol(const MatrixXd& A, const VectorXd& b, VectorXd& x) {
 // " Executes the Generalized LLSQ solver "
 void run_llsq_gsol() {
 
-    // TODO: Solve exercise 2.d
-    
+	int m = 5;
+	int n = 4;
+
+	VectorXd k(m);
+	VectorXd h_k(m);
+	MatrixXd A(m, n);
+
+	k << 11, 32, 77, 121, 152;
+	h_k << 9, 10, 12, 14, 15;
+
+	A.col(0) = VectorXd::Ones(m);
+	
+	for(int i = 0; i < m; i++) {
+		A(i, 1) = std::sin(2 * M_PI * k(i) / 366);
+		A(i, 2) = std::cos(2 * M_PI * k(i) / 366);
+		A(i, 3) = std::sin(M_PI * k(i) / 366) * std::cos(M_PI * k(i) / 366);
+	}
+
+	VectorXd x;
+	double err = llsq_gsol(A, h_k, x);
+
+	std::cout << "solution: " << x.transpose() << std::endl;
+	std::cout << "error: " << err << std::endl;
 }
 
 

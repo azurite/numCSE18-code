@@ -11,8 +11,23 @@ using namespace Eigen;
 // (out) gradF: Gradient of $F(x;S)$ wrt $x$.
 VectorXd evalGradF(const VectorXd& S, const VectorXd& x) {
     
-    //TODO: Solve exercise 3.c
+	const int M = S.size();
+	double partial_mu = 0;
+	double partial_rho = 0;
+	
+	double mu = x(0);
+	double rho = x(1);
+
+	for(int i = 0; i < M; i++) {
+		partial_mu += (S(i) - mu) / (rho * rho);
+		partial_rho += ((S(i) - mu) * (S(i) - mu)) / (rho * rho * rho) - (1.0 / rho);
+	}
+
+	VectorXd gradF(2);
+	gradF(0) = -partial_mu;
+	gradF(1) = -partial_rho;
     
+	return gradF;
 }
 
 
@@ -23,8 +38,21 @@ VectorXd evalGradF(const VectorXd& S, const VectorXd& x) {
 // (out) hessF: Hessian of $F(x;S)$ wrt $x$.
 MatrixXd evalHessF(const VectorXd& S, const VectorXd& x) {
 
-    //TODO: Solve exercise 3.e
-    
+	const int M = S.size();
+	double mu = x(0);
+	double rho = x(1);
+
+	MatrixXd H = MatrixXd::Zero(2, 2);
+
+	for(int i = 0; i < M; i++) {
+		H(0, 0) += -(1.0 / (rho * rho));
+		H(0, 1) += -2 * (S(i) - mu) / std::pow(rho, 3);	
+		H(1, 0) += -2 * (S(i) - mu) / std::pow(rho, 3);
+		H(1, 1) += (1.0 / (rho * rho) - 3 * (S(i) - mu) * (S(i) - mu) / std::pow(rho, 4));	
+	}
+
+	H = -H;
+	return H;
 }
 
 
@@ -35,9 +63,17 @@ MatrixXd evalHessF(const VectorXd& S, const VectorXd& x) {
 // (in)  maxItr: maximum iterations
 // (in/out) x: model parameters
 void newtonOpt(const VectorXd& S, const double tol, const int maxItr, VectorXd& x) {
-
-    //TODO: Solve exercise 3.g
 	
+	VectorXd gradF;
+	for(int i = 0; i < maxItr; i++) {
+		gradF = evalGradF(S, x);
+
+		if(gradF.norm() < tol) {
+			return;		
+		}
+		
+		x += evalHessF(S, x).fullPivLu().solve(-gradF);
+	}	
 }
 
 
@@ -46,11 +82,15 @@ void newtonOpt(const VectorXd& S, const double tol, const int maxItr, VectorXd& 
 // (in) S: randomized samples of weights
 void runNewtonOpt(const VectorXd& S) {
 
-    double tol = 1e-8; // tolerance
-    int maxItr = 100; // maximum iterations
-    
-    //TODO: Solve exercise 3.h
-    
+	double tol = 1e-8; // tolerance
+	int maxItr = 100; // maximum iterations
+
+	VectorXd x(2);
+	x << 20, 3;
+    	
+	newtonOpt(S, tol, maxItr, x);
+
+	std::cout << "estimates: " << x.transpose() << std::endl;
 }
 
 

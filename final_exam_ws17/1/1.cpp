@@ -7,7 +7,11 @@ VectorXd lowBidiagSolve(const MatrixXd &A, const VectorXd &y) {
 	int n = y.size();
 	VectorXd x(n);
 
-	// TODO: implement lower bidiagonal matrix solver
+	x(0) = y(0) / A(0, 0);
+
+	for(int i = 1; i < n; i++) {
+		x(i) = (y(i) - x(i - 1) * A(i, i - 1)) / A(i, i);
+	}
 
 	return x;
 }
@@ -17,7 +21,11 @@ VectorXd upBidiagSolve(const MatrixXd &A, const VectorXd &y) {
 	int n = y.size();
 	VectorXd x(n);
 
-	// TODO: implement upper bidiagonal matrix solver
+	x(n - 1) = y(n - 1) / A(n - 1, n - 1);
+
+	for(int i = n - 2; i >= 0; i--) {
+		x(i) = (y(i) - x(i + 1) * A(i, i + 1)) / A(i, i);
+	}
 
 	return x;
 }
@@ -27,17 +35,47 @@ VectorXd tridiagSolve(const MatrixXd &A, const VectorXd &y) {
 	int n = y.size();
 	VectorXd x(n);
 
-	// TODO: implement tridiagonal matrix solver
+	VectorXd b(n);
+
+	// b_0 = d_0
+	b(0) = A(0, 0);
+
+	// b_i = d_i - (l_{i-1} * u_{i-1} / b_{i-1})
+	// i = {1, ..., n - 1}
+	for(int i = 1; i < n; i++) {
+		b(i) = A(i, i) - A(i, i - 1) * A(i - 1, i) / b(i - 1);
+	}
+
+	// a_i = l_i / b_i 
+	// i = {0, .., n - 2}
+	VectorXd a = A.diagonal(-1).cwiseQuotient(b.head(n - 1));
+
+	// c_i = u_i
+	// i = {0, ..., n - 2}
+	VectorXd c = A.diagonal(1);
+
+	// Ax = y <==> LUx = y
+	// Le = y (1)
+	// Ux = e (2)
+
+
+	// (1) the a's are the lower diagonal of L
+	VectorXd e(n);
+	e(0) = y(0);
+
+	for(int i = 1; i < n; i++) {
+		e(i) = (y(i) - e(i - 1) * a(i - 1));
+	}
+
+	// (2) the c's are the upper diagonal of U and the b's are the diagonal
+	x(n - 1) = e(n - 1) / b(n - 1);
+
+	for(int i = n - 2; i >= 0; i--) {
+		x(i) = (e(i) - x(i + 1) * c(i)) / b(i);
+	}
 
 	return x;
 }
-
-
-
-
-
-
-
 
 
 /***** TESTING ******/

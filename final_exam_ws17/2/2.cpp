@@ -96,17 +96,38 @@ public:
 
 	static SparseVec cwiseMult(const SparseVec &a, const SparseVec &b) {
 		SparseVec out;
+		
+		auto it_a = a.pairs.begin();
+		auto it_b = b.pairs.begin();
 
-		// TODO: implement component-wise multiplication of SparseVec
+		while(it_a != a.pairs.end() && it_b != b.pairs.end()) {
+			if(it_a->ind == it_b->ind) {
+				out.append(it_a->ind, it_a->val * it_b->val);
+				it_a++;
+				it_b++;
+			}			
+			
+			if(it_a->ind < it_b->ind) {
+				it_a++;
+			}
+
+			if(it_b->ind < it_a->ind) {
+				it_b++;
+			}
+		}
 
 		return out;
 	}
 
 
 	static SparseVec conv(const SparseVec &a, const SparseVec &b) {
-		SparseVec out;
+		SparseVec out(a.len + b.len - 1);
 
-		// TODO: implement convolution (no conversion to dense structures)
+		for(Pair eb : b.pairs) {
+			for(Pair ea : a.pairs) {
+				out.append(eb.ind + ea.ind, eb.val * ea.val);
+			} 		
+		}
 
 		return out;
 	}
@@ -115,7 +136,29 @@ public:
 		int n = x.len;
 		SparseVec out(n);
 
-		// TODO: implement fft (no conversion to dense structures)
+		if(n == 1) { return x; }
+
+		int m = n / 2;
+		SparseVec x_even(m);
+		SparseVec x_odd(m);
+	
+		for(Pair p : x.pairs) {
+			if(p.ind % 2 == 0) {
+				x_even.append(p.ind / 2, p.val);
+			}
+			else {
+				x_odd.append((p.ind - 1) / 2, p.val);
+			}
+		}
+
+		SparseVec c_even = fft(x_even);
+		SparseVec c_odd = fft(x_odd);
+
+		complex omega = std::exp(-2 * PI / n * I);
+
+		for(int k = 0; k < n; k++) {
+			out.append(k, c_even.get(k % m) + c_odd.get(k % m) * std::pow(omega, k));
+		}
 
 		return out;
 	}
@@ -126,17 +169,20 @@ public:
 	static SparseVec ifft(const SparseVec &x) {
 		SparseVec out;
 
-		// TODO: implement inverse fft (no conversion to dense structures)
+		SparseVec y = fft(x.conj());
+
+		for(Pair p : y.pairs) {
+			out.append(p.ind, (1.0 / x.len) * std::conj(p.val));
+		}
 
 		return out;
 	}
 
 	static SparseVec convfft(SparseVec &a, SparseVec &b) {
-		SparseVec out;
-
-		// TODO: implement convolution via fft (no conversion to dense structures)
-		
-		return out;
+		int len = a.len + b.len - 1;
+		a.len = len;
+		b.len = len;
+		return ifft(SparseVec::cwiseMult(fft(a), fft(b)));
 	}
 
 
